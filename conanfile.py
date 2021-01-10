@@ -75,7 +75,7 @@ class LibdeflateConan(ConanFile):
         self.copy("*.dylib", dst="lib", src=self._source_subfolder, symlinks=True)
 
     def package_info(self):
-        prefix = "lib" if self.settings.compiler == "Visual Studio" else ""
+        prefix = "lib" if self.settings.os == "Windows" else ""
         suffix = "static" if self.settings.os == "Windows" and not self.options.shared else ""
         self.cpp_info.libs = ["{0}deflate{1}".format(prefix, suffix)]
         if self.settings.os == "Windows" and self.options.shared:
