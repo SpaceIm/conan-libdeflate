@@ -63,7 +63,7 @@ class LibdeflateConan(ConanFile):
 
     def package_info(self):
         prefix = "lib" if self.settings.compiler == "Visual Studio" else ""
-        suffix = "static" if self.settings.compiler == "Windows" and not self.options.shared else ""
+        suffix = "static" if self.settings.os == "Windows" and not self.options.shared else ""
         self.cpp_info.libs = ["{0}deflate{1}".format(prefix, suffix)]
         if self.settings.os == "Windows" and self.options.shared:
             self.cpp_info.defines = ["LIBDEFLATE_DLL"]
