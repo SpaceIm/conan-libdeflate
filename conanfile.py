@@ -32,34 +32,47 @@ class LibdeflateConan(ConanFile):
         tools.get(**self.conan_data["sources"][self.version])
         os.rename(self.name + "-" + self.version, self._source_subfolder)
 
+    def _build_msvc(self):
+        makefile_msc_file = os.path.join(self._source_subfolder, "Makefile.msc")
+        tools.replace_in_file(makefile_msc_file, "CFLAGS = /MD /O2 -I.", "CFLAGS = /nologo $(CFLAGS) -I.")
+        tools.replace_in_file(makefile_msc_file, "LDFLAGS =", "")
+        with tools.chdir(self._source_subfolder):
+            with tools.vcvars(self.settings):
+                with tools.environment_append(VisualStudioBuildEnvironment(self).vars):
+                    target = "libdeflate.dll" if self.options.shared else "libdeflatestatic.lib"
+                    self.run("nmake /f Makefile.msc {}".format(target))
+
+    @property
+    def _make_program(self):
+        return tools.get_env("CONAN_MAKE_PROGRAM", tools.which("make") or tools.which("mingw32-make"))
+
+    def _build_make(self):
+        tools.replace_in_file(os.path.join(self._source_subfolder, "Makefile"), "-O2", "")
+        with tools.chdir(self._source_subfolder):
+            with tools.environment_append(AutoToolsBuildEnvironment(self).vars):
+                if self.settings.os == "Windows":
+                    suffix = ".dll" if self.options.shared else "static.lib"
+                elif tools.is_apple_os(self.settings.os):
+                    suffix = ".dylib" if self.options.shared else ".a"
+                else:
+                    suffix = ".so" if self.options.shared else ".a"
+                target = "libdeflate{}".format(suffix)
+                self.run("{0} -f Makefile {1}".format(self._make_program, target))
+
     def build(self):
         if self.settings.compiler == "Visual Studio":
-            makefile_msc_file = os.path.join(self._source_subfolder, "Makefile.msc")
-            tools.replace_in_file(makefile_msc_file, "CFLAGS = /MD /O2 -I.", "CFLAGS = /nologo $(CFLAGS) -I.")
-            tools.replace_in_file(makefile_msc_file, "LDFLAGS =", "")
-            with tools.chdir(self._source_subfolder):
-                with tools.vcvars(self.settings):
-                    with tools.environment_append(VisualStudioBuildEnvironment(self).vars):
-                        target = "libdeflate.dll" if self.options.shared else "libdeflatestatic.lib"
-                        self.run("nmake /f Makefile.msc {}".format(target))
+            self._build_msvc()
         else:
-            with tools.chdir(self._source_subfolder):
-                with tools.environment_append(AutoToolsBuildEnvironment(self).vars):
-                    self.run("make -f Makefile")
+            self._build_make()
 
     def package(self):
         self.copy("COPYING", dst="licenses", src=self._source_subfolder)
-        if self.settings.compiler == "Visual Studio":
-            self.copy("libdeflate.h", dst="include", src=self._source_subfolder)
-            if self.options.shared:
-                self.copy("libdeflate.lib", dst="lib", src=self._source_subfolder)
-                self.copy("libdeflate.dll", dst="bin", src=self._source_subfolder)
-            else:
-                self.copy("libdeflatestatic.lib", dst="lib", src=self._source_subfolder)
-        else:
-            with tools.chdir(self._source_subfolder):
-                with tools.environment_append(AutoToolsBuildEnvironment(self).vars):
-                    self.run("make -f Makefile install")
+        self.copy("libdeflate.h", dst="include", src=self._source_subfolder)
+        self.copy("*.lib", dst="lib", src=self._source_subfolder)
+        self.copy("*.dll", dst="bin", src=self._source_subfolder)
+        self.copy("*.a", dst="lib", src=self._source_subfolder)
+        self.copy("*.so*", dst="lib", src=self._source_subfolder, symlinks=True)
+        self.copy("*.dylib", dst="lib", src=self._source_subfolder, symlinks=True)
 
     def package_info(self):
         prefix = "lib" if self.settings.compiler == "Visual Studio" else ""
