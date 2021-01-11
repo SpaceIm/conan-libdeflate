@@ -6,7 +6,7 @@ class LibdeflateConan(ConanFile):
     name = "libdeflate"
     description = "Heavily optimized library for DEFLATE/zlib/gzip compression and decompression."
     license = "MIT"
-    topics = ("conan", "libdeflate", "compression", "decompression", "deflate", "gzip")
+    topics = ("conan", "libdeflate", "compression", "decompression", "deflate", "zlib", "gzip")
     homepage = "https://github.com/ebiggers/libdeflate"
     url = "https://github.com/conan-io/conan-center-index"
 
