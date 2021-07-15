@@ -62,14 +62,7 @@ class LibdeflateConan(ConanFile):
                 else:
                     suffix = ".so" if self.options.shared else ".a"
                 target = "libdeflate{}".format(suffix)
-                self.run(
-                    "{make} -f Makefile {target} -j{cpucount}".format(
-                        make=self._make_program,
-                        target=target,
-                        cpucount=tools.cpu_count()
-                    ),
-                    win_bash=tools.os_info.is_windows
-                )
+                self.run("{0} -f Makefile {1}".format(self._make_program, target), win_bash=tools.os_info.is_windows)
 
     def build(self):
         if self.settings.compiler == "Visual Studio":
