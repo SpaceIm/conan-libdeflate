@@ -3,11 +3,17 @@ from cpt.packager import ConanMultiPackager
 import os
 
 def inspect_value_from_recipe(attribute, recipe_path):
-    dir_name = os.path.dirname(recipe_path)
-    with os.chdir("./" if dir_name == "" else dir_name):
+    cwd = os.getcwd()
+    result = None
+    try:
+        dir_name = os.path.dirname(recipe_path)
+        os.chdir("./" if dir_name == "" else dir_name)
         conan_instance, _, _ = conan_api.Conan.factory()
         inspect_result = conan_instance.inspect(path=os.path.basename(recipe_path), attributes=[attribute])
         result = inspect_result.get(attribute)
+    except:
+        pass
+    os.chdir(cwd)
     return result
 
 def get_repo_branch_from_githubaction():
