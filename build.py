@@ -3,8 +3,8 @@ from cpt.packager import ConanMultiPackager
 import os
 
 def inspect_value_from_recipe(attribute, recipe_path):
-    result = None
-    with os.chdir(os.path.dirname(recipe_path)):
+    dir_name = os.path.dirname(recipe_path)
+    with os.chdir("./" if dir_name == "" else dir_name):
         conan_instance, _, _ = conan_api.Conan.factory()
         inspect_result = conan_instance.inspect(path=os.path.basename(recipe_path), attributes=[attribute])
         result = inspect_result.get(attribute)
